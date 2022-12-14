@@ -1,0 +1,125 @@
+
+
+    <html>
+        <head>
+            <title>RTCBot: Remote Video</title>
+            <script src="/rtcbot.js"></script>
+            <script crossorigin src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+        </head>
+        <body style="text-align: center;padding-top: 30px;">
+             <video autoplay playsinline controls></video> <audio autoplay></audio>
+            <p>
+             <button type="button" id="start_button">start camera!</button>
+            <button type="button" id="stop_button">stop camera!</button>
+            <button type="button" id="flip_button">flip camera!</button>
+            </p>
+            <script>
+                
+	           //var conn = new rtcbot.RTCConnection(true, {
+	                //iceServers:[
+	                    //{ urls: ["stun:stun.l.google.com:19302"] },
+	                    //{ urls: "turn:182.180.77.38:3478",
+	                     //username: "test", credential: "test", },
+	                //]});
+	                
+					var conn = new rtcbot.RTCConnection();
+					var kb = new rtcbot.Keyboard();
+
+
+                    
+                    
+                async function connect() {
+					
+			   conn = new rtcbot.RTCConnection();
+			   kb = new rtcbot.Keyboard();
+               
+               conn.video.subscribe(function(stream) {
+                    document.querySelector("video").srcObject = stream;
+                });
+               
+               conn.audio.subscribe(function(stream) {
+                    document.querySelector("audio").srcObject = stream;
+                });
+
+               conn.subscribe(m => console.log("Received from python:", m));
+                
+                
+                
+                    let offer = await conn.getLocalDescription();
+                    console.log("offer created");
+
+                    let response = await fetch("/connect", {
+                        method: "POST",
+                        cache: "no-cache",
+                        body: JSON.stringify(offer)
+                    });
+                    
+                    await conn.setRemoteDescription(await response.json());
+                    kb.subscribe(conn.put_nowait);
+
+                    console.log("Ready!");
+                }
+                 function stop() {
+				
+				    // close peer connection
+				    kb.close();
+				    conn.close();
+
+				}
+                
+                                
+                var start_button = document.querySelector("#start_button");
+				start_button.onclick = function() {
+					console.log("Button clicked");
+					connect();
+					kb.subscribe(conn.put_nowait);
+				};
+				
+				 var flip_button = document.querySelector("#flip_button");
+				flip_button.onclick = async function() {
+					console.log("Button flipp clicked");
+					//connect();
+					
+					conn.video.subscribe(function(stream) {
+                    document.querySelector("video").srcObject = stream;
+                });
+               
+               conn.audio.subscribe(function(stream) {
+                    document.querySelector("audio").srcObject = stream;
+                });
+     
+
+                    
+                    await conn.setRemoteDescription(await response.json());
+                    kb.subscribe(conn.put_nowait);
+
+                    console.log("Ready!");
+                
+                
+                
+                
+                
+                
+				
+				};
+				
+				
+				var stop_button = document.querySelector("#stop_button");
+				stop_button.onclick = function() {
+					console.log("stop Button clicked");
+					stop();
+
+				};
+                
+                
+                
+                //connect();
+                //var mybutton = document.querySelector("#mybutton");
+				//mybutton.onclick = function() {
+					//conn.put_nowait("Button Clicked!");
+					//console.log("button clicked");
+				//};
+
+            </script>
+        </body>
+    </html>
